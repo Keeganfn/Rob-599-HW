@@ -1,7 +1,12 @@
 <launch>
 
-<node pkg="rob599_hw1" name="drive_forward" type="drive_forward.py" />
+<node pkg="rob599_hw1" name="approach" type="approach.py" >
+    <remap from="base_scan" to="base_scan_filtered" />
+</node>
+
 <node pkg="rob599_hw1" name="filter_laser_scan" type="filter_laser_scan.py" />
 
+
+<node pkg="rob599_hw1" name="wall_angle" type="wall_angle.py" />
 
 </launch>

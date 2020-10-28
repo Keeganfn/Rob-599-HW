@@ -8,6 +8,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PointStamped
 
 def callback(msg):
+    #creates transform listener and waits for a response
     transform_listener = tf.TransformListener()
     while True:
         try:
@@ -16,41 +17,23 @@ def callback(msg):
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             rospy.loginfo("Not Ready")
             continue    
-
+    #list that will contain our new filtered ranges
     in_front = []
-    #count = 1
+    #turns the y coordinate of each laser out of polar and translates it down to the base 
+    #then checks to see if it lies within the 1 meter width of our robot and adds to list, if not fills the new list with an inf
+    #doesnt account for rotation, so its not as general as I would like but it will work in most plausible situations including fetch
     for i in range(len(msg.ranges)):
         laser_angle = msg.angle_min + (msg.angle_increment * i) 
-        y = (msg.ranges[i] * math.sin(laser_angle)) + translation[1]    
-    
-        #laser_point = PointStamped()
-        #laser_point.header.frame_id = "laser_link"
-        #laser_point.header.stamp = rospy.Time()    
-        #laser_point.point.x = msg.ranges[i] * math.cos(laser_angle)    
-        #laser_point.point.y = msg.ranges[i] * math.sin(laser_angle)    
-        #laser_point.point.z = 0
-        #location = transform_listener.transformPoint("base_link", laser_point) 
-    
+        y = (msg.ranges[i] * math.sin(laser_angle)) + translation[1]     
         if(y <= 0.5 and y >= -0.5):
-            #if(count == 1):
-                #new_min = laser_angle
-                #count += 1
-
-            in_front.append(msg.ranges[i])  
-            #new_max = laser_angle
+              in_front.append(msg.ranges[i])  
         else:   
             in_front.append(float("inf"))
 
-#   new_laser_msg = LaserScan()
-#   new_laser_msg = msg
-#   new_laser_msg.angle_min = new_min
-#   new_laser_msg.angle_max = new_max
-#   new_laser_msg.ranges = in_front
-#   new_laser_msg.intensities = []
-#   msg.angle_min = new_min
-#   msg.angle_max = new_max
+    #msg now contains our modified ranges
     msg.ranges = in_front
 
+    #published the modified laserscan to base_scan_filtered
     pub.publish(msg)
 
 
